@@ -1,7 +1,11 @@
 import { Contract, ContractBuilder } from './contract';
 import { addPausable } from './add-pausable';
 import { defineFunctions } from './utils/define-functions';
-import { CommonContractOptions, withCommonContractDefaults, getSelfArg } from './common-options';
+import {
+  CommonContractOptions,
+  withCommonContractDefaults,
+  getSelfArg,
+} from './common-options';
 import { contractDefaults as commonDefaults } from './common-options';
 import { printContract } from './print';
 import { setAccessControl } from './set-access-control';
@@ -11,6 +15,7 @@ export const defaults: Required<ERC721Options> = {
   name: 'MyToken',
   burnable: false,
   pausable: false,
+  enumerable: false,
   access: commonDefaults.access,
   info: commonDefaults.info,
 } as const;
@@ -23,6 +28,7 @@ export interface ERC721Options extends CommonContractOptions {
   name: string;
   burnable?: boolean;
   pausable?: boolean;
+  enumerable?: boolean;
 }
 
 function withDefaults(opts: ERC721Options): Required<ERC721Options> {
@@ -31,6 +37,7 @@ function withDefaults(opts: ERC721Options): Required<ERC721Options> {
     ...withCommonContractDefaults(opts),
     burnable: opts.burnable ?? defaults.burnable,
     pausable: opts.pausable ?? defaults.pausable,
+    enumerable: opts.enumerable ?? defaults.enumerable,
   };
 }
 
@@ -68,7 +75,10 @@ function addBase(c: ContractBuilder, pausable: boolean) {
   // c.addImplementedTrait(erc721MetadataTrait);
 
   // Call nested IErc65 from Erc721
-  c.addUseClause('openzeppelin_stylus::utils', 'introspection::erc165::IErc165');
+  c.addUseClause(
+    'openzeppelin_stylus::utils',
+    'introspection::erc165::IErc165'
+  );
   c.addUseClause('alloy_primitives', 'FixedBytes');
   c.addFunction(erc721Trait, functions.supports_interface); // TODO: This is currently hardcoded to call Erc721. If other overrides are needed, consider a more generic solution. See Solidity's addOverride function in `packages/core/solidity/src/contract.ts` for example
 
@@ -78,13 +88,20 @@ function addBase(c: ContractBuilder, pausable: boolean) {
     c.addUseClause('alloy_primitives', 'Address');
     c.addUseClause('alloy_primitives', 'U256');
 
-    c.addFunctionCodeBefore(erc721Trait, functions.transfer, ['self.pausable.when_not_paused()?;']);
-    c.addFunctionCodeBefore(erc721Trait, functions.transfer_from, ['self.pausable.when_not_paused()?;']);
+    c.addFunctionCodeBefore(erc721Trait, functions.transfer, [
+      'self.pausable.when_not_paused()?;',
+    ]);
+    c.addFunctionCodeBefore(erc721Trait, functions.transfer_from, [
+      'self.pausable.when_not_paused()?;',
+    ]);
   }
 }
 
 function addBurnable(c: ContractBuilder, pausable: boolean) {
-  c.addUseClause('openzeppelin_stylus::token::erc721::extensions', 'IErc721Burnable');
+  c.addUseClause(
+    'openzeppelin_stylus::token::erc721::extensions',
+    'IErc721Burnable'
+  );
 
   c.addUseClause('alloc::vec', 'Vec');
   c.addUseClause('alloy_primitives', 'U256');
@@ -92,7 +109,9 @@ function addBurnable(c: ContractBuilder, pausable: boolean) {
   c.addFunction(erc721Trait, functions.burn);
 
   if (pausable) {
-    c.addFunctionCodeBefore(erc721Trait, functions.burn, ['self.pausable.when_not_paused()?;']);
+    c.addFunctionCodeBefore(erc721Trait, functions.burn, [
+      'self.pausable.when_not_paused()?;',
+    ]);
   }
 }
 
@@ -115,7 +134,11 @@ const erc721Trait = {
 const functions = defineFunctions({
   // Token Functions
   transfer: {
-    args: [getSelfArg(), { name: 'to', type: 'Address' }, { name: 'value', type: 'U256' }],
+    args: [
+      getSelfArg(),
+      { name: 'to', type: 'Address' },
+      { name: 'value', type: 'U256' },
+    ],
     returns: 'Result<bool, Vec<u8>>',
     code: ['self.erc721.transfer(to, value).map_err(|e| e.into())'],
   },
