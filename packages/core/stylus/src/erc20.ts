@@ -1,11 +1,7 @@
 import { BaseImplementedTrait, Contract, ContractBuilder } from './contract';
 import { addPausable } from './add-pausable';
 import { defineFunctions } from './utils/define-functions';
-import {
-  CommonContractOptions,
-  withCommonContractDefaults,
-  getSelfArg,
-} from './common-options';
+import { CommonContractOptions, withCommonContractDefaults, getSelfArg } from './common-options';
 import { contractDefaults as commonDefaults } from './common-options';
 import { printContract } from './print';
 import { setAccessControl } from './set-access-control';
@@ -102,10 +98,7 @@ function addBase(c: ContractBuilder, pausable: boolean): BaseImplementedTrait {
 }
 
 function addPermit(c: ContractBuilder, pausable: boolean): BaseImplementedTrait {
-  c.addUseClause(
-    'openzeppelin_stylus::token::erc20::extensions',
-    'Erc20Permit'
-  );
+  c.addUseClause('openzeppelin_stylus::token::erc20::extensions', 'Erc20Permit');
   c.addUseClause('openzeppelin_stylus::utils::cryptography::eip712', 'IEip712');
 
   c.addImplementedTrait(erc20PermitTrait);
@@ -118,21 +111,15 @@ function addPermit(c: ContractBuilder, pausable: boolean): BaseImplementedTrait 
     c.addUseClause('alloy_primitives', 'U256');
     c.addUseClause('alloy_primitives', 'B256');
 
-    c.addFunctionCodeBefore(
-      erc20PermitTrait,
-      functions(erc20PermitTrait).permit,
-      ['self.pausable.when_not_paused()?;']
-    );
-    c.addFunctionCodeBefore(
-      erc20PermitTrait,
-      functions(erc20PermitTrait).transfer,
-      ['self.pausable.when_not_paused()?;']
-    );
-    c.addFunctionCodeBefore(
-      erc20PermitTrait,
-      functions(erc20PermitTrait).transfer_from,
-      ['self.pausable.when_not_paused()?;']
-    );
+    c.addFunctionCodeBefore(erc20PermitTrait, functions(erc20PermitTrait).permit, [
+      'self.pausable.when_not_paused()?;',
+    ]);
+    c.addFunctionCodeBefore(erc20PermitTrait, functions(erc20PermitTrait).transfer, [
+      'self.pausable.when_not_paused()?;',
+    ]);
+    c.addFunctionCodeBefore(erc20PermitTrait, functions(erc20PermitTrait).transfer_from, [
+      'self.pausable.when_not_paused()?;',
+    ]);
   }
 
   return erc20PermitTrait;
@@ -144,10 +131,7 @@ function addMetadata(c: ContractBuilder) {
 }
 
 function addBurnable(c: ContractBuilder, pausable: boolean, trait: BaseImplementedTrait) {
-  c.addUseClause(
-    'openzeppelin_stylus::token::erc20::extensions',
-    'IErc20Burnable'
-  );
+  c.addUseClause('openzeppelin_stylus::token::erc20::extensions', 'IErc20Burnable');
 
   c.addUseClause('alloc::vec', 'Vec');
   c.addUseClause('alloy_primitives', 'Address');
@@ -180,14 +164,12 @@ function addFlashMint(c: ContractBuilder, pausable: boolean, baseTrait: BaseImpl
 
   c.addImplementedTrait(flashMintTrait);
   
-  const fns = functions(baseTrait);
-
-  c.addFunction(flashMintTrait, fns.max_flash_loan);
-  c.addFunction(flashMintTrait, fns.flash_fee);
-  c.addFunction(flashMintTrait, fns.flash_loan);
+  c.addFunction(flashMintTrait, functions(baseTrait).max_flash_loan);
+  c.addFunction(flashMintTrait, functions(baseTrait).flash_fee);
+  c.addFunction(flashMintTrait, functions(baseTrait).flash_loan);
   
   if (pausable) {
-    c.addFunctionCodeBefore(flashMintTrait, fns.flash_loan, [
+    c.addFunctionCodeBefore(flashMintTrait, functions(baseTrait).flash_loan, [
       'self.pausable.when_not_paused()?;',
     ]);
   }
