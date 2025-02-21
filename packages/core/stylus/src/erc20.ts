@@ -180,7 +180,8 @@ function addFlashMint(c: ContractBuilder, pausable: boolean, baseTrait: BaseImpl
 
   c.addImplementedTrait(flashMintTrait);
   
-  const fns = functions(flashMintTrait, baseTrait);
+  const fns = functions(baseTrait);
+
   c.addFunction(flashMintTrait, fns.max_flash_loan);
   c.addFunction(flashMintTrait, fns.flash_fee);
   c.addFunction(flashMintTrait, fns.flash_loan);
@@ -225,7 +226,7 @@ const flashMintTrait: BaseImplementedTrait = {
 //   }
 // }
 
-const functions = (trait: BaseImplementedTrait, base?: BaseImplementedTrait) =>
+const functions = (baseTrait: BaseImplementedTrait) =>
   defineFunctions({
     // Token Functions
     transfer: {
@@ -236,7 +237,7 @@ const functions = (trait: BaseImplementedTrait, base?: BaseImplementedTrait) =>
       ],
       returns: 'Result<bool, Vec<u8>>',
       code: [
-        `self.${trait.storage.name}.transfer(to, value).map_err(|e| e.into())`,
+        `self.${baseTrait.storage.name}.transfer(to, value).map_err(|e| e.into())`,
       ],
     },
     transfer_from: {
@@ -248,7 +249,7 @@ const functions = (trait: BaseImplementedTrait, base?: BaseImplementedTrait) =>
       ],
       returns: 'Result<bool, Vec<u8>>',
       code: [
-        `self.${trait.storage.name}.transfer_from(from, to, value).map_err(|e| e.into())`,
+        `self.${baseTrait.storage.name}.transfer_from(from, to, value).map_err(|e| e.into())`,
       ],
     },
 
@@ -267,7 +268,7 @@ const functions = (trait: BaseImplementedTrait, base?: BaseImplementedTrait) =>
     burn: {
       args: [getSelfArg(), { name: 'value', type: 'U256' }],
       returns: 'Result<(), Vec<u8>>',
-      code: [`self.${trait.storage.name}.burn(value).map_err(|e| e.into())`],
+      code: [`self.${baseTrait.storage.name}.burn(value).map_err(|e| e.into())`],
     },
     burn_from: {
       args: [
@@ -277,7 +278,7 @@ const functions = (trait: BaseImplementedTrait, base?: BaseImplementedTrait) =>
       ],
       returns: 'Result<(), Vec<u8>>',
       code: [
-        `self.${trait.storage.name}.burn_from(account, value).map_err(|e| e.into())`,
+        `self.${baseTrait.storage.name}.burn_from(account, value).map_err(|e| e.into())`,
       ],
     },
 
@@ -294,7 +295,7 @@ const functions = (trait: BaseImplementedTrait, base?: BaseImplementedTrait) =>
       ],
       returns: 'Result<(), Vec<u8>>',
       code: [
-        `self.${trait.storage.name}.permit(owner, spender, value, deadline, v, r, s).map_err(|e| e.into())`,
+        `self.${baseTrait.storage.name}.permit(owner, spender, value, deadline, v, r, s).map_err(|e| e.into())`,
       ],
     },
 
@@ -305,7 +306,7 @@ const functions = (trait: BaseImplementedTrait, base?: BaseImplementedTrait) =>
       ],
       returns: 'U256',
       code: [
-        `self.${trait.storage.name}.max_flash_loan(token, &self.${base!.storage.name}).map_err(|e| e.into())`,
+        `self.flash_mint.max_flash_loan(token, &self.${baseTrait.storage.name}).map_err(|e| e.into())`,
       ],
     },
     flash_fee: {
@@ -316,7 +317,7 @@ const functions = (trait: BaseImplementedTrait, base?: BaseImplementedTrait) =>
       ],
       returns: 'U256',
       code: [
-        `self.${trait.storage.name}.flash_fee(token, value).map_err(|e| e.into())`,
+        `self.flash_mint.flash_fee(token, value).map_err(|e| e.into())`,
       ],
     },
     flash_loan: {
@@ -329,7 +330,7 @@ const functions = (trait: BaseImplementedTrait, base?: BaseImplementedTrait) =>
       ],
       returns: 'Result<(), Vec<u8>>',
       code: [
-        `self.${trait.storage.name}.flash_loan(receiver, token, value, data, &mut self.${base!.storage.name}).map_err(|e| e.into())`,
+        `self.flash_mint.flash_loan(receiver, token, value, data, &mut self.${baseTrait.storage.name}).map_err(|e| e.into())`,
       ],
     },
   });
